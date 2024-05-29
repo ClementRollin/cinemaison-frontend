@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, FlatList, Image } from 'react-native';
+import {View, Text, StyleSheet, FlatList, Image, Button, TouchableOpacity} from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useNavigation } from '@react-navigation/native';
 
 type Movie = {
     id: number;
@@ -9,25 +11,31 @@ type Movie = {
 
 const FilmsProgrammes: React.FC = () => {
     const [movies, setMovies] = useState<Movie[]>([]);
+    const navigation = useNavigation();
 
     useEffect(() => {
         const fetchMovies = async () => {
-            try {
-                const response = await fetch('http://localhost:5000/api/movies', {
-                    method: 'GET',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                });
-                if (response.ok) {
-                    const data = await response.json();
-                    setMovies(data);
-                } else {
-                    const errorData = await response.json();
-                    console.error('Failed to fetch movies:', errorData.message);
+            const token = await AsyncStorage.getItem('token');
+            if (token) {
+                try {
+                    const response = await fetch('http://localhost:5000/api/movies', {
+                        method: 'GET',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        },
+                    });
+                    if (response.ok) {
+                        const data = await response.json();
+                        setMovies(data);
+                    } else {
+                        console.error('Failed to fetch movies:', await response.text());
+                    }
+                } catch (error) {
+                    console.error('Error fetching movies:', error);
                 }
-            } catch (error) {
-                console.error('Error fetching movies:', error);
+            } else {
+                console.error('No token found');
             }
         };
 
@@ -36,17 +44,22 @@ const FilmsProgrammes: React.FC = () => {
 
     const renderMovieItem = ({ item }: { item: Movie }) => (
         <View style={styles.movieItem}>
-            <Image source={{ uri: item.poster_path }} style={styles.poster} />
-            <Text style={styles.title}>{item.title}</Text>
+            {item.poster_path && <Image source={{ uri: item.poster_path }} style={styles.poster} />}
+            <Text style={styles.title}>{item.title || 'Sans titre'}</Text>
         </View>
     );
 
+    const keyExtractor = (item: Movie) => item.id ? item.id.toString() : `${Math.random()}`;
+
     return (
         <View style={styles.container}>
+            <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+                <Text style={styles.backButtonText}>Retour</Text>
+            </TouchableOpacity>
             <FlatList
                 data={movies}
                 renderItem={renderMovieItem}
-                keyExtractor={item => item.id.toString()}
+                keyExtractor={keyExtractor}
                 numColumns={2}
                 contentContainerStyle={styles.flatListContent}
             />
@@ -58,6 +71,20 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: '#0a0a0a',
+    },
+    backButton: {
+        backgroundColor: '#891405',
+        paddingVertical: 10,
+        paddingHorizontal: 20,
+        borderRadius: 5,
+        alignSelf: 'flex-end',
+        margin: 10,
+    },
+    backButtonText: {
+        color: '#F4F4F4',
+        textTransform: 'uppercase',
+        fontSize: 14,
+        fontWeight: 'bold',
     },
     flatListContent: {
         padding: 10,
