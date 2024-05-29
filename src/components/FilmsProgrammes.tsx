@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import {View, Text, StyleSheet, FlatList, Image, Button, TouchableOpacity} from 'react-native';
+import { View, Text, StyleSheet, FlatList, Image, TouchableOpacity } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 
@@ -8,6 +8,8 @@ type Movie = {
     title: string;
     poster_path: string;
 };
+
+const TMDB_BASE_URL = "https://image.tmdb.org/t/p/w500";
 
 const FilmsProgrammes: React.FC = () => {
     const [movies, setMovies] = useState<Movie[]>([]);
@@ -44,7 +46,7 @@ const FilmsProgrammes: React.FC = () => {
 
     const renderMovieItem = ({ item }: { item: Movie }) => (
         <View style={styles.movieItem}>
-            {item.poster_path && <Image source={{ uri: item.poster_path }} style={styles.poster} />}
+            {item.poster_path && <Image source={{ uri: `${TMDB_BASE_URL}${item.poster_path}` }} style={styles.poster} />}
             <Text style={styles.title}>{item.title || 'Sans titre'}</Text>
         </View>
     );
@@ -100,7 +102,7 @@ const styles = StyleSheet.create({
     poster: {
         width: '100%',
         height: 150,
-        resizeMode: 'cover',
+        resizeMode: 'contain',
     },
     title: {
         color: '#fff',
