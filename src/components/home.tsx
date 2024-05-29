@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, Image, Button, TouchableOpacity, ScrollView } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useNavigation, NavigationProp } from '@react-navigation/native';
+import { RootStackParamList } from '../navigation/AppNavigator';
 
 type Favorite = {
     id: number;
@@ -10,6 +12,7 @@ type Favorite = {
 const Home: React.FC = () => {
     const [username, setUsername] = useState('');
     const [favorites, setFavorites] = useState<Favorite[]>([]);
+    const navigation = useNavigation<NavigationProp<RootStackParamList>>();
 
     useEffect(() => {
         const fetchUsername = async () => {
@@ -72,7 +75,7 @@ const Home: React.FC = () => {
             </View>
             <View style={styles.line}></View>
             <View style={styles.content}>
-                <Button title="Films programmés" color="#C59417" />
+                <Button title="Films programmés" color="#C59417" onPress={() => navigation.navigate('FilmsProgrammes')} /> {/* Ajoutez onPress */}
                 <View style={styles.lineBlack}></View>
                 <Button title="Trouver mon film" color="#C59417" />
             </View>
