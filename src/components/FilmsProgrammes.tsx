@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, FlatList, Image, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, FlatList, Image, TouchableOpacity, ActivityIndicator } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 
@@ -10,39 +10,54 @@ type Movie = {
 };
 
 const TMDB_BASE_URL = "https://image.tmdb.org/t/p/w500";
+const MOVIES_PER_PAGE = 6;
 
 const FilmsProgrammes: React.FC = () => {
     const [movies, setMovies] = useState<Movie[]>([]);
+    const [page, setPage] = useState(1);
+    const [loading, setLoading] = useState(true);
+    const [hasMore, setHasMore] = useState(true);
     const navigation = useNavigation();
 
     useEffect(() => {
-        const fetchMovies = async () => {
-            const token = await AsyncStorage.getItem('token');
-            if (token) {
-                try {
-                    const response = await fetch('http://localhost:5000/api/movies', {
-                        method: 'GET',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${token}`
-                        },
-                    });
-                    if (response.ok) {
-                        const data = await response.json();
-                        setMovies(data);
-                    } else {
-                        console.error('Failed to fetch movies:', await response.text());
-                    }
-                } catch (error) {
-                    console.error('Error fetching movies:', error);
-                }
-            } else {
-                console.error('No token found');
-            }
-        };
-
         fetchMovies();
-    }, []);
+    }, [page]);
+
+    const fetchMovies = async () => {
+        const token = await AsyncStorage.getItem('token');
+        if (token) {
+            try {
+                const response = await fetch(`http://10.104.131.172:5000/api/movies?page=${page}&limit=${MOVIES_PER_PAGE}`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                });
+                if (response.ok) {
+                    const data = await response.json();
+                    setMovies(prevMovies => [...prevMovies, ...data]);
+                    setLoading(false);
+                    if (data.length < MOVIES_PER_PAGE) {
+                        setHasMore(false);
+                    }
+                } else {
+                    console.error('Failed to fetch movies:', await response.text());
+                }
+            } catch (error) {
+                console.error('Error fetching movies:', error);
+            }
+        } else {
+            console.error('No token found');
+        }
+    };
+
+    const loadMoreMovies = () => {
+        if (hasMore && !loading) {
+            setLoading(true);
+            setPage(prevPage => prevPage + 1);
+        }
+    };
 
     const renderMovieItem = ({ item }: { item: Movie }) => (
         <View style={styles.movieItem}>
@@ -64,6 +79,9 @@ const FilmsProgrammes: React.FC = () => {
                 keyExtractor={keyExtractor}
                 numColumns={2}
                 contentContainerStyle={styles.flatListContent}
+                onEndReached={loadMoreMovies}
+                onEndReachedThreshold={0.5}
+                ListFooterComponent={loading ? <ActivityIndicator size="large" color="#891405" /> : null}
             />
         </View>
     );

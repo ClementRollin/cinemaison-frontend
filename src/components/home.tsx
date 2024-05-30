@@ -19,7 +19,7 @@ const Home: React.FC = () => {
             const token = await AsyncStorage.getItem('token');
             if (token) {
                 try {
-                    const response = await fetch('http://localhost:5000/api/user', {
+                    const response = await fetch('http://10.104.131.172:5000/api/user', {
                         method: 'GET',
                         headers: {
                             'Content-Type': 'application/json',
@@ -43,7 +43,7 @@ const Home: React.FC = () => {
             const token = await AsyncStorage.getItem('token');
             if (token) {
                 try {
-                    const response = await fetch('http://localhost:5000/api/favorites', {
+                    const response = await fetch('http://10.104.131.172:5000/api/favorites', {
                         method: 'GET',
                         headers: {
                             'Content-Type': 'application/json',
