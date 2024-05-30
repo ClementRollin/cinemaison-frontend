@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, FlatList, Image, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, FlatList, Image, TouchableOpacity, ActivityIndicator } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 
 type Movie = {
-    id: number;
+    movie_id: number;
     title: string;
     poster_path: string;
 };
@@ -13,36 +13,53 @@ const TMDB_BASE_URL = "https://image.tmdb.org/t/p/w500";
 
 const FilmsProgrammes: React.FC = () => {
     const [movies, setMovies] = useState<Movie[]>([]);
+    const [page, setPage] = useState(1);
+    const [loading, setLoading] = useState(false);
+    const [hasMore, setHasMore] = useState(true);
     const navigation = useNavigation();
 
-    useEffect(() => {
-        const fetchMovies = async () => {
-            const token = await AsyncStorage.getItem('token');
-            if (token) {
-                try {
-                    const response = await fetch('http://10.104.131.172:5000/api/movies', {
-                        method: 'GET',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${token}`
-                        },
-                    });
-                    if (response.ok) {
-                        const data = await response.json();
-                        setMovies(data);
+    const fetchMovies = async (page: number) => {
+        const token = await AsyncStorage.getItem('token');
+        if (token) {
+            try {
+                setLoading(true);
+                const response = await fetch(`http://10.104.131.172:5000/api/movies?page=${page}&limit=20`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                });
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.length > 0) {
+                        setMovies((prevMovies) => [...prevMovies, ...data]);
+                        setHasMore(data.length === 20); // S'il y a exactement 20 films, il y en a peut-être plus à charger
                     } else {
-                        console.error('Failed to fetch movies:', await response.text());
+                        setHasMore(false); // Plus de films à charger
                     }
-                } catch (error) {
-                    console.error('Error fetching movies:', error);
+                } else {
+                    console.error('Failed to fetch movies:', await response.text());
                 }
-            } else {
-                console.error('No token found');
+            } catch (error) {
+                console.error('Error fetching movies:', error);
+            } finally {
+                setLoading(false);
             }
-        };
+        } else {
+            console.error('No token found');
+        }
+    };
 
-        fetchMovies();
-    }, []);
+    useEffect(() => {
+        fetchMovies(page);
+    }, [page]);
+
+    const loadMoreMovies = () => {
+        if (!loading && hasMore) {
+            setPage((prevPage) => prevPage + 1);
+        }
+    };
 
     const renderMovieItem = ({ item }: { item: Movie }) => (
         <View style={styles.movieItem}>
@@ -51,7 +68,7 @@ const FilmsProgrammes: React.FC = () => {
         </View>
     );
 
-    const keyExtractor = (item: Movie) => item.id ? item.id.toString() : `${Math.random()}`;
+    const keyExtractor = (item: Movie) => item.movie_id.toString();
 
     return (
         <View style={styles.container}>
@@ -64,6 +81,9 @@ const FilmsProgrammes: React.FC = () => {
                 keyExtractor={keyExtractor}
                 numColumns={2}
                 contentContainerStyle={styles.flatListContent}
+                onEndReached={loadMoreMovies}
+                onEndReachedThreshold={0.5}
+                ListFooterComponent={loading ? <ActivityIndicator size="large" color="#FFF" /> : null}
             />
         </View>
     );
