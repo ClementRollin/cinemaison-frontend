@@ -23,7 +23,7 @@ const FilmsProgrammes: React.FC = () => {
         if (token) {
             try {
                 setLoading(true);
-                const response = await fetch(`http://10.104.131.172:5000/api/movies?page=${page}&limit=20`, {
+                const response = await fetch(`http://10.104.131.172:5000/api/movies?page=${page}&limit=1116`, {
                     method: 'GET',
                     headers: {
                         'Content-Type': 'application/json',
@@ -34,7 +34,7 @@ const FilmsProgrammes: React.FC = () => {
                     const data = await response.json();
                     if (data.length > 0) {
                         setMovies((prevMovies) => [...prevMovies, ...data]);
-                        setHasMore(data.length === 20); // S'il y a exactement 20 films, il y en a peut-être plus à charger
+                        setHasMore(data.length === 20); // Vérifier si d'autres films sont disponibles
                     } else {
                         setHasMore(false); // Plus de films à charger
                     }
