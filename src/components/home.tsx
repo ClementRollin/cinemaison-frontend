@@ -75,9 +75,9 @@ const Home: React.FC = () => {
             </View>
             <View style={styles.line}></View>
             <View style={styles.content}>
-                <Button title="Films programmés" color="#C59417" onPress={() => navigation.navigate('FilmsProgrammes')} /> {/* Ajoutez onPress */}
+                <Button title="Films programmés" color="#C59417" onPress={() => navigation.navigate('FilmsProgrammes')} />
                 <View style={styles.lineBlack}></View>
-                <Button title="Trouver mon film" color="#C59417" />
+                <Button title="Trouver mon film" color="#C59417" onPress={() => navigation.navigate('Questionnaire')} />
             </View>
             <View>
                 <Text style={styles.titleFavoris}>

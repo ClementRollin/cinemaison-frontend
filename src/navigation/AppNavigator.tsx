@@ -14,7 +14,14 @@ export type RootStackParamList = {
     Home: undefined;
     FilmsProgrammes: undefined;
     Questionnaire: undefined;
-    Recommendations: { recommendations: string[] };
+    Recommendations: { recommendations: Movie[], genre: string};
+};
+
+export type Movie = {
+    movie_id: number;
+    title: string;
+    poster_path: string;
+    genres: string[];
 };
 
 const Stack = createStackNavigator<RootStackParamList>();
