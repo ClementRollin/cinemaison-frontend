@@ -11,29 +11,33 @@ interface Props {
 }
 
 const genres = [
-    'Science-fiction',
-    'Thriller',
-    'Comédie',
-    'Drame',
+    'Science Fiction',
+    'Adventure',
+    'Comedy',
+    'Drama',
     'Action',
     'Romance',
-    'Fantastique',
-    'Horreur'
+    'Fantasy',
+    'Crime',
+    'Family',
+    'Horror',
+    'Animation',
+    'War',
 ];
 
-const colors = ['#FF6347', '#FFA500', '#FFD700', '#ADFF2F', '#40E0D0', '#1E90FF', '#9370DB', '#FF69B4'];
+const colors = [
+    '#FF6347', '#FFA500', '#FFD700', '#ADFF2F',
+    '#40E0D0', '#1E90FF', '#9370DB', '#FF69B4',
+    '#6A5ACD', '#20B2AA', '#DA70D6', '#FF4500'
+];
 
 const Questionnaire: React.FC<Props> = ({ navigation }) => {
     const [selectedGenre, setSelectedGenre] = useState<string | null>(null);
     const [isSpinning, setIsSpinning] = useState(false);
     const spinValue = useRef(new Animated.Value(0)).current;
 
-    const getGenreByRotation = (rotation: number) => {
-        const segmentAngle = 360 / genres.length;
-        const adjustedRotation = rotation % 360;
-        const index = Math.floor(adjustedRotation / segmentAngle);
-        console.log(`Rotation: ${rotation}, Adjusted Rotation: ${adjustedRotation}, Index: ${index}, Genre: ${genres[index]}`);
-        return genres[index];
+    const getGenreByIndex = (index: number) => {
+        return genres[index % genres.length];
     };
 
     const spinWheel = () => {
@@ -42,36 +46,34 @@ const Questionnaire: React.FC<Props> = ({ navigation }) => {
         setIsSpinning(true);
         const randomDuration = Math.floor(Math.random() * 3000) + 2000; // 2 to 5 seconds
         const randomValue = Math.floor(Math.random() * 3600) + 3600; // More randomization
-        const spinToValue = randomValue;
 
         Animated.timing(spinValue, {
-            toValue: spinToValue,
+            toValue: randomValue,
             duration: randomDuration,
             easing: Easing.out(Easing.quad),
             useNativeDriver: false,
         }).start(() => {
             setIsSpinning(false);
-            const finalRotation = spinToValue % 360;
-            const genre = getGenreByRotation(finalRotation);
+            const finalRotation = randomValue % 360;
+            const segmentAngle = 360 / genres.length;
+            const index = Math.floor(finalRotation / segmentAngle);
+            const genre = getGenreByIndex(index);
             setSelectedGenre(genre);
-            setTimeout(() => {
-                fetchRecommendations(genre);
-            }, 2000);
+            fetchRecommendations(genre);
         });
     };
 
     const fetchRecommendations = async (genre: string) => {
         try {
             const token = await AsyncStorage.getItem('token');
-            const response = await axios.get(`http://10.104.131.172:5000/api/movies?genre=${genre}`, {
+            const response = await axios.get(`http://10.104.131.172:5000/api/movies`, {
                 headers: {
                     'Authorization': `Bearer ${token}`
-                }
+                },
+                params: { genre }
             });
             const movies: Movie[] = response.data;
-            setTimeout(() => {
-                navigation.navigate('Recommendations', { recommendations: movies, genre });
-            }, 500);
+            navigation.navigate('Recommendations', { recommendations: movies, genre });
         } catch (error) {
             console.error('Failed to fetch recommendations', error);
         }
