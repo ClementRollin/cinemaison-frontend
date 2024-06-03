@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, FlatList, Image, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, FlatList, Image, TouchableOpacity, ActivityIndicator, TextInput } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 
@@ -13,9 +13,11 @@ const TMDB_BASE_URL = "https://image.tmdb.org/t/p/w500";
 
 const FilmsProgrammes: React.FC = () => {
     const [movies, setMovies] = useState<Movie[]>([]);
+    const [filteredMovies, setFilteredMovies] = useState<Movie[]>([]);
     const [page, setPage] = useState(1);
     const [loading, setLoading] = useState(false);
     const [hasMore, setHasMore] = useState(true);
+    const [search, setSearch] = useState('');
     const navigation = useNavigation();
 
     const fetchMovies = async (page: number) => {
@@ -34,6 +36,7 @@ const FilmsProgrammes: React.FC = () => {
                     const data = await response.json();
                     if (data.length > 0) {
                         setMovies((prevMovies) => [...prevMovies, ...data]);
+                        setFilteredMovies((prevMovies) => [...prevMovies, ...data]);
                         setHasMore(data.length === 20); // Vérifier si d'autres films sont disponibles
                     } else {
                         setHasMore(false); // Plus de films à charger
@@ -55,6 +58,14 @@ const FilmsProgrammes: React.FC = () => {
         fetchMovies(page);
     }, [page]);
 
+    useEffect(() => {
+        if (search === '') {
+            setFilteredMovies(movies);
+        } else {
+            setFilteredMovies(movies.filter(movie => movie.title.toLowerCase().includes(search.toLowerCase())));
+        }
+    }, [search, movies]);
+
     const loadMoreMovies = () => {
         if (!loading && hasMore) {
             setPage((prevPage) => prevPage + 1);
@@ -75,8 +86,15 @@ const FilmsProgrammes: React.FC = () => {
             <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
                 <Text style={styles.backButtonText}>Retour</Text>
             </TouchableOpacity>
+            <TextInput
+                style={styles.searchBar}
+                placeholder="Rechercher un film"
+                placeholderTextColor="#888"
+                value={search}
+                onChangeText={setSearch}
+            />
             <FlatList
-                data={movies}
+                data={filteredMovies}
                 renderItem={renderMovieItem}
                 keyExtractor={keyExtractor}
                 numColumns={2}
@@ -107,6 +125,14 @@ const styles = StyleSheet.create({
         textTransform: 'uppercase',
         fontSize: 14,
         fontWeight: 'bold',
+    },
+    searchBar: {
+        backgroundColor: '#F0D165',
+        color: '#000',
+        borderRadius: 5,
+        margin: 10,
+        padding: 10,
+        fontSize: 16,
     },
     flatListContent: {
         padding: 10,
